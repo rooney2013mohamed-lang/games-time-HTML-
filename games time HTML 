@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Games Time</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#0a0a0e;--bg2:#121218;--bg3:#1c1c26;--bg4:#262632;--text:#f0f0f5;--text2:#8b8b9e;--accent:#3b82f6;--green:#22c55e;--red:#ef4444;--border:#2a2a38;--code-bg:#0d0d12;--code-fg:#c8c8d4;--radius:12px;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root.light{--bg:#fff;--bg2:#fff;--bg3:#f4f5f8;--bg4:#e9ebf0;--text:#15171c;--text2:#6b7280;--border:#e4e6ec;--code-bg:#f6f7f9;--code-fg:#1f2430;color-scheme:light}
+*{box-sizing:inherit;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:Cairo,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;font-size:15px;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border:1px solid var(--border);border-radius:10px;font-weight:600;cursor:pointer;background:var(--bg3)}
+.btn:hover{background:var(--bg4)}.btn:disabled{opacity:.5;cursor:wait}
+.btn-primary,.btn.on{background:var(--accent);border-color:var(--accent);color:var(--onacc,#fff)}
+.btn-primary:hover{background:var(--accent);filter:brightness(.88)}
+.sw{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.swb{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;box-shadow:0 0 0 1px var(--border)}
+.swb.sel{border-color:var(--text)}
+#cp{width:40px;height:32px;padding:0;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer}
+.btn-danger{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.25)}
+.btn-sm{padding:7px 12px;font-size:.85rem}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;z-index:50}
+.header-left{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{font-weight:700;font-size:1.1rem}
+.user-badge{background:var(--bg3);padding:4px 12px;border-radius:20px;font-size:.82rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+.admin-badge{background:var(--accent);color:var(--onacc,#fff);padding:2px 8px;border-radius:5px;font-size:.7rem;font-weight:700}
+.layout{display:flex;min-height:calc(100vh - 53px)}
+.sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);padding:22px 14px;flex-shrink:0}
+.sidebar h3{font-size:.8rem;color:var(--text2);margin-bottom:12px}
+.user-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;margin-bottom:6px;background:var(--bg3)}
+.user-item.empty{opacity:.45;border:1px dashed var(--border);background:none}
+.name{font-size:.88rem;flex:1;line-height:1.3}
+.name small{display:block;color:var(--text2);font-size:.72rem}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#555}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+.x{border:0;background:none;color:var(--text2);cursor:pointer}
+.main{flex:1;min-width:0;padding:28px 24px}
+.tabs{display:flex;gap:4px;margin-bottom:26px;background:var(--bg2);padding:4px;border-radius:10px;width:fit-content;max-width:100%;overflow-x:auto;border:1px solid var(--border)}
+.tab{padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.88rem;color:var(--text2);font-weight:600;white-space:nowrap}
+.tab.active{background:var(--accent);color:var(--onacc,#fff)}
+.panel{display:none}.panel.active{display:block}
+.games-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.games-header h2{font-size:1.25rem}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.game-card,.ai-box,.settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.game-card h4{margin-bottom:6px;font-size:1.05rem}
+.game-meta{font-size:.82rem;color:var(--text2);margin-bottom:10px}
+.badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--bg3);margin-inline-end:4px}
+.badge-public{background:rgba(34,197,94,.15);color:#16a34a}.badge-private{background:rgba(239,68,68,.15);color:#ef4444}
+.game-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.empty-state{text-align:center;padding:50px 20px;color:var(--text2);grid-column:1/-1}
+.editor-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.editor-toolbar input,.editor-toolbar select,.ai-talk input{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;outline:none}
+.editor-toolbar input{flex:1;min-width:160px}
+.editor-layout{display:flex;flex-direction:column;gap:14px;height:calc(100vh - 260px);min-height:480px}
+.pane{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.preview-pane{flex:1.2;min-height:220px}.editor-pane{flex:1;min-height:180px}
+.pane-header{padding:9px 16px;border-bottom:1px solid var(--border);background:var(--bg3);font-size:.85rem;font-weight:600;color:var(--text2);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pane iframe{flex:1;width:100%;border:0;background:#fff}
+#code-editor{flex:1;width:100%;padding:14px;background:var(--code-bg);color:var(--code-fg);border:0;resize:none;font:13px/1.55 "SF Mono",Consolas,monospace;outline:none;direction:ltr;text-align:left}
+.xbtn{display:none}
+.pane.full{position:fixed;inset:0;z-index:90;border-radius:0;background:#000}
+.pane.full .pane-header{display:none}
+.pane.full .xbtn{display:inline-flex;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:2}
+.stage{flex:none;aspect-ratio:var(--r,16/9);width:min(100%,calc(70vh*var(--k,1.7778)));margin:0 auto;display:flex}
+.pane.full{height:auto;display:grid;place-items:center}
+.pane.full .stage{flex:none;width:min(100%,calc(100dvh*var(--k,99)));height:var(--h,100dvh);aspect-ratio:var(--r,auto);max-height:100dvh}
+.preview-pane .stage{flex:1;width:100%;aspect-ratio:auto}
+.dkbtn,.dock{display:none}
+.pane.full .dkbtn{display:inline-flex;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:96px;z-index:2}
+.pane.full.dk .dock{display:flex;position:absolute;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));gap:6px;z-index:2;flex-wrap:wrap}
+.dock input{flex:1;min-width:0;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg3)}
+.dk-res{display:none;width:100%;max-height:30vh;overflow-y:auto;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;font-size:.85rem;white-space:pre-wrap;line-height:1.6}
+.ai-box{margin-top:16px}
+.ai-box h4,.settings-card h4{margin-bottom:10px;font-size:1rem}
+.hint,.note{color:var(--text2);font-size:.85rem}
+.hint{margin-bottom:10px}
+.ai-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.ai-opts .btn{justify-content:flex-start;text-align:start}
+.ai-talk{display:flex;gap:8px}.ai-talk input{flex:1;min-width:0}
+.mic.on{background:var(--red);border-color:var(--red);color:#fff}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.85rem;color:var(--text2)}
+.ai-result{display:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:12px;white-space:pre-wrap;font-size:.9rem;max-height:260px;overflow-y:auto;line-height:1.7}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.setting-row label{color:var(--text2);font-size:.9rem}
+input[type=range]{width:130px;accent-color:var(--accent)}
+.toast{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--border);padding:11px 20px;border-radius:10px;font-size:.9rem;z-index:200;display:none;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.toast.show{display:block}
+.gate{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:300;padding:24px;text-align:center;font-weight:700;font-size:1.1rem}
+.roombox{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.roombox h3{font-size:.8rem;margin-bottom:6px;opacity:.85}
+.roombox input,.nmbox input{padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;outline:none;min-width:0;width:100%}
+.rm-row{display:flex;gap:6px}
+.rm-code{font-size:.95rem;font-weight:700;letter-spacing:.12em;text-align:center;background:var(--bg3);border-radius:8px;padding:4px 8px;direction:ltr;display:inline-block}
+.rm-m{font-size:.8rem;padding:4px 8px;border-radius:6px;background:var(--bg3);margin-top:4px}
+.rm-m small{display:block;color:var(--text2);font-size:.68rem}
+.room-ui-compact .btn{padding:6px 10px;font-size:.78rem}
+.room-ui-compact .note{font-size:.75rem;margin:4px 0}
+.nmbox{display:flex;flex-direction:column;gap:12px;width:min(320px,100%)}
+.nmbox input{text-align:center;font-size:1.05rem;padding:12px 14px}
+.entry{overflow-y:auto}
+.pre-btn{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px}
+.preset{position:absolute;top:calc(56px + env(safe-area-inset-top,0px));left:12px;width:min(300px,calc(100% - 24px));background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;z-index:2;text-align:start;font-weight:400}
+.logo-lg{font-size:1.5rem;font-weight:700}
+.nmbox select{width:100%;margin-top:6px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:9px}
+@media(max-width:800px){.layout{flex-direction:column}.sidebar{width:auto;border:0;border-bottom:1px solid var(--border);padding:12px}#seats{display:flex;gap:8px;overflow-x:auto}.user-item{flex:none}.main{padding:16px 12px}.games-grid{grid-template-columns:1fr}.editor-toolbar{flex-direction:column}.editor-layout{height:auto;min-height:0}.preview-pane{height:58vh;flex:none}.editor-pane{height:34vh;flex:none}.header{padding:10px 12px}}
+</style>
+</head>
+<body>
+<div id="gate" class="gate" hidden><p id="gm"></p></div>
+
+<div class="header">
+ <div class="header-left">
+  <div class="logo">Games Time</div>
+  <div class="user-badge"><span id="who"></span><span id="adm" class="admin-badge" hidden>ADMIN</span></div>
+  <div id="hdr-room" class="user-badge" hidden style="gap:6px;cursor:pointer" title="Copy room code">
+    <span>🚪</span><span id="hdr-code" style="font-weight:700;letter-spacing:.12em;direction:ltr;font-size:.85rem"></span>
+  </div>
+ </div>
+ <button class="btn btn-sm" onclick="go('settings')" data-i18n="settings">⚙️ Settings</button>
+</div>
+
+<div class="layout">
+ <aside class="sidebar"><h3><span data-i18n="members">Players</span> <span id="cnt">0</span></h3><div id="seats"></div><div class="roombox"><h3>🚪 <span data-i18n="room">Room</span></h3><div id="room-ui" class="room-ui-compact"></div></div></aside>
+ <div class="main">
+  <div class="tabs">
+   <div class="tab active" data-tab="games" onclick="go('games')" data-i18n="games">Games</div>
+   <div class="tab" data-tab="editor" onclick="go('editor')" data-i18n="upload">Upload</div>
+   <div class="tab" data-tab="settings" onclick="go('settings')" data-i18n="settings">Settings</div>
+  </div>
+
+  <div id="panel-games" class="panel active">
+   <div class="games-header"><h2 data-i18n="games_list">Games</h2><button class="btn btn-primary btn-sm" onclick="go('editor')" data-i18n="new_game">+ New game</button></div>
+   <div id="games-list" class="games-grid"></div>
+  </div>
+
+  <div id="panel-editor" class="panel">
+   <div class="editor-toolbar">
+    <input type="text" id="game-title" placeholder="Game title" data-i18n-placeholder="game_title_ph" maxlength="40">
+    <select id="privacy-select"><option value="public" data-i18n="public">👥 Public</option><option value="private" data-i18n="private">🔒 Private</option></select>
+    <select id="mode-select"><option value="offline" data-i18n="offline">📴 Offline</option><option value="online" data-i18n="online">🌐 Online</option></select>
+    <button class="btn btn-primary btn-sm" onclick="saveGame()" data-i18n="save">Save</button>
+    <button class="btn btn-sm" onclick="runPreview()" data-i18n="preview">▶ Preview</button>
+   </div>
+   <div class="editor-layout">
+    <div class="pane preview-pane" id="preview-pane">
+     <div class="pane-header"><span data-i18n="preview_live">Live preview</span><button class="btn btn-sm" onclick="full('preview-pane')">⛶ <span data-i18n="fullscreen">Full</span></button></div>
+     <button class="btn btn-sm xbtn" onclick="full('preview-pane')">✕ <span data-i18n="exit">Exit</span></button>
+     <button class="btn btn-sm dkbtn" onclick="$('#preview-pane').classList.toggle('dk')">💬 <span data-i18n="ai_title">AI Helper</span></button><div class="stage"><iframe id="preview-frame" sandbox="allow-scripts allow-pointer-lock allow-modals" allow="autoplay; fullscreen; gamepad" allowfullscreen title="preview"></iframe></div><div class="dock"><div id="dk-res" class="dk-res"></div><input id="dk-in" placeholder="Tell the assistant what to change…" data-i18n-placeholder="ai_dock_ph" onkeydown="if(event.key==='Enter')dk()"><button class="btn mic" onclick="listen()">🎤</button><button class="btn btn-primary ai-b" onclick="dk()" data-i18n="send">Send</button></div>
+    </div>
+    <div class="pane editor-pane">
+     <div class="pane-header" data-i18n="code_header">Game code (HTML / CSS / JS)</div>
+     <textarea id="code-editor" spellcheck="false" placeholder="Paste game code here, then preview…" data-i18n-placeholder="code_ph"></textarea>
+    </div>
+   </div>
+   <div class="ai-box">
+    <h4 data-i18n="ai_title">AI Helper</h4>
+    <p class="hint">اختار واحد من الخيارات، أو اتكلم معاه وقول اللي عايزه بصوتك.</p>
+    <div class="ai-opts">
+     <button class="btn ai-b" onclick="act(1)" data-i18n="ai_fix">1. Fix problems in the code</button>
+     <button class="btn ai-b" onclick="act(2)" data-i18n="ai_review">2. Review code (no edits)</button>
+     <button class="btn ai-b" onclick="act(3)" data-i18n="ai_improve">3. Suggest improvements</button>
+    </div>
+    <div class="ai-talk">
+     <input id="ai-in" placeholder="Type or speak: fix it / why won't the player move?" data-i18n-placeholder="ai_ph" onkeydown="if(event.key==='Enter')ask()">
+     <button class="btn mic" id="mic" onclick="listen()" title="Speak">🎤</button>
+     <button class="btn btn-primary ai-b" onclick="ask()" data-i18n="send">Send</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="spk"> <span data-i18n="speak_reply">Read reply aloud</span></label>
+    <button class="btn btn-sm" id="und" onclick="undo()" hidden style="margin-top:10px" data-i18n="undo">Undo fix</button>
+    <div id="ai-res" class="ai-result"></div>
+   </div>
+  </div>
+
+  <div id="panel-settings" class="panel">
+   <div class="settings-grid">
+    <div class="settings-card"><h4 data-i18n="audio">🔊 Audio</h4>
+     <div class="setting-row"><label data-i18n="volume">Volume</label><input type="range" id="vol" min="0" max="100" oninput="setAudio()"></div>
+     <div class="setting-row"><label data-i18n="mute">Mute</label><input type="checkbox" id="mute" onchange="setAudio()"></div>
+     <p class="note" data-i18n="audio_note">Works on most games; not guaranteed for all.</p></div>
+    <div class="settings-card"><h4 data-i18n="screen">🖥️ Screen</h4>
+     <div class="setting-row" id="rt"><button class="btn btn-sm" data-r="auto" onclick="setRatio(this)" data-i18n="ratio_auto">Auto</button><button class="btn btn-sm" data-r="16/9" onclick="setRatio(this)">16:9</button><button class="btn btn-sm" data-r="4/3" onclick="setRatio(this)">4:3</button><button class="btn btn-sm" data-r="9/16" onclick="setRatio(this)" data-i18n="ratio_tall">Portrait</button></div>
+     <p class="note" data-i18n="screen_note">Auto fills the screen. Other ratios use a fixed frame.</p></div>
+    <div class="settings-card"><h4 data-i18n="lang_label">Language / اللغة</h4><div class="setting-row"><select id="lang-select-in" onchange="setLang(this.value)" style="padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;flex:1"><option value="en">English</option><option value="ar">العربية</option></select></div></div>
+    <div class="settings-card"><h4 data-i18n="theme_label">🎨 Theme</h4><div class="setting-row"><button class="btn" id="th" onclick="toggleTheme()"></button><div class="sw" id="sw"></div><input type="color" id="cp" oninput="setAccent(this.value)" title="لون مخصص"></div></div>
+    <div class="settings-card"><h4 data-i18n="name_label">👤 Name</h4><div class="setting-row"><input id="nmset" maxlength="20" placeholder="Your name" data-i18n-placeholder="name_ph" style="flex:1;min-width:0;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px"><button class="btn btn-primary btn-sm" onclick="nmSave()" data-i18n="save">Save</button></div></div>
+    <div class="settings-card"><h4 data-i18n="admin">🛡️ Admin</h4><div class="setting-row"><input type="password" id="ac" placeholder="Admin code" data-i18n-placeholder="admin_code_ph" style="flex:1;min-width:0;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px"><button class="btn btn-primary btn-sm" id="ab" onclick="adminCode()">دخول كأدمن</button></div><p class="note" id="an"></p><div id="admin-players" style="margin-top:12px" hidden></div></div>
+    <div class="settings-card"><h4>🎮 التحكم</h4><p class="note">أزرار التحكم بتتحدد جوه كل لعبة، والموقع مش بيقدر يغيّرها من برّه.</p></div>
+   </div>
+  </div>
+
+  <div id="panel-play" class="panel">
+   <div class="pane" id="play-pane">
+    <div class="pane-header"><button class="btn btn-sm" onclick="go('games')" data-i18n="back">Back</button><b id="pt"></b><button class="btn btn-sm" onclick="full('play-pane')">⛶ <span data-i18n="fullscreen">Full</span></button></div>
+    <button class="btn btn-sm xbtn" onclick="go('games')">✕ <span data-i18n="exit">Exit</span></button>
+    <div class="stage"><iframe id="play-frame" sandbox="allow-scripts allow-pointer-lock allow-modals" allow="autoplay; fullscreen; gamepad" allowfullscreen title="اللعبة"></iframe></div>
+   </div>
+  </div>
+ </div>
+</div>
+<div id="nmscr" class="gate entry" hidden>
+ <button class="btn btn-sm pre-btn" onclick="$('#preset').hidden=!$('#preset').hidden" data-i18n="settings_btn">⚙️ Settings</button>
+ <div id="preset" class="preset" hidden>
+  <div class="setting-row"><label data-i18n="lang_label">Language</label>
+    <select id="lang-select" onchange="setLang(this.value)" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;min-width:140px">
+      <option value="en">English</option>
+      <option value="ar">العربية</option>
+    </select>
+  </div>
+  <div class="setting-row"><label data-i18n="theme_label">Theme</label><button class="btn btn-sm" id="th0" onclick="toggleTheme()"></button></div>
+  <div class="setting-row"><label data-i18n="color_label">Color</label><div class="sw" id="sw0"></div><input type="color" id="cp0" oninput="setAccent(this.value)" title="Accent"></div>
+ </div>
+ <div class="nmbox">
+  <div class="logo-lg">Games Time</div>
+  <div class="note" data-i18n="enter_hint">Enter your name once, then join or create a room</div>
+  <input id="nmin" maxlength="20" placeholder="Your name" data-i18n-placeholder="name_ph" onkeydown="if(event.key==
